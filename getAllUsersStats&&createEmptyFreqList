@@ -1,0 +1,48 @@
+import System.Random
+import System.IO.Unsafe
+randomZeroToX :: Int -> Int
+randomZeroToX x= unsafePerformIO (getStdRandom (randomR (0, x)))
+users = ["A","B","C","D","E"]
+items=[ "item1" , "item2" , "item3" , "item4" , "item5" , "item6" ]
+purchases =[("user1 " , [ [ "item1" , "item2" , "item3" ] , [ "item1" , "item2" , "item4" ] ] ) ,
+           ("user2" , [ [ "item2" , "item5" ] , [ "item4" , "item5" ] ] ),
+           ("user3" , [ [ "item3" , "item2" ] ] ) ,
+           ("user4" , [ ] )]
+ 
+--recommend :: String -> [String] -> String
+
+
+createEmptyFreqList :: [String]->[(String,[b])]
+createEmptyFreqList [] = []
+createEmptyFreqList (x:xs) = (x ,[]) : createEmptyFreqList xs 
+
+-- I AM ASSUMING AN ITEM IS NOT FOUND MORE THAN ONCE IN THE SAME CART IF THIS IS WRONG
+-- THEN I NEED TO UPDATE THE noOfOccurences METHOD ONLY 
+contains ::Eq a =>[a]->a-> Bool
+contains [] _ =False
+
+contains (x:xs) a |x/=a =contains xs a
+                  |otherwise = True 
+
+ 
+
+--RETURNS THE NUMBER OF OCCURENCES OF 2 ITEMS TOGETHER IN A USER'S PURCHUASE HISTORY
+noOfOccurences :: String ->String -> [[String]] -> Int
+noOfOccurences _  _ [] =0
+noOfOccurences item a  (x:xs ) | contains x a && contains x item = 1+ (noOfOccurences item a xs)
+                               |otherwise =(noOfOccurences item a xs)
+--returns the list of items purchuased with this item
+itemsData :: String -> [String] -> [[String]]->[(String,Int)]
+itemsData _ [] _ =[]
+itemsData item (x:xs) carts = if x/=item && noOfOccurences item x carts > 0  then (x , noOfOccurences item x carts ) : itemsData item xs carts else itemsData item xs carts 
+
+-- IT TAKES THE ITEMS ARRAY 2TIMES TO LOOP ON ONE AND PASS THE OTHER TO ITEMSDATA
+allItemsData :: [String]->[String]->[[String]]-> [(String,[(String,Int)])]
+allItemsData [] _ _ = []
+allItemsData (x:xs) items carts = (x,itemsData x items carts) : allItemsData xs items carts
+
+
+getAllUsersStats :: [(String,[[String]])]->[(String,[(String,[(String ,Int)])])]
+getAllUsersStats [] =[]
+getAllUsersStats ( (user,carts):xs )= (user , allItemsData items items carts ): getAllUsersStats xs
+
